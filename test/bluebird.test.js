@@ -16,13 +16,22 @@ describe('bluebird', function () {
     soResolved = Math.random().toString();
   });
 
-  it('should reject immediately if max is 1', function () {
+  it('should reject immediately if max is 1 (using options)', function () {
     return expect(retry(function () {
       count++;
       return Promise.reject(soRejected);
     }, {
       max: 1
     })).to.eventually.be.rejectedWith(soRejected).then(function () {
+      expect(count).to.equal(1);
+    });
+  });
+
+  it('should reject immediately if max is 1 (using integer)', function () {
+    return expect(retry(function () {
+      count++;
+      return Promise.reject(soRejected);
+    }, 1)).to.eventually.be.rejectedWith(soRejected).then(function () {
       expect(count).to.equal(1);
     });
   });

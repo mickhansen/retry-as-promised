@@ -2,9 +2,9 @@ var debug = require('debug')('retry-as-promised')
   , error = require('debug')('retry-as-promised:error');
 
 module.exports = function(callback, options) {
-  if (!callback || !options) throw new Error('retry-as-promised must be passed a callback and a options set or an integer');
+  if (!callback || !options) throw new Error('retry-as-promised must be passed a callback and a options set or a number');
 
-  if (typeof options === 'integer') {
+  if (typeof options === 'number') {
     options = {max: options};
   }
 
