@@ -10,3 +10,7 @@ return retry(function () {
   return promise;
 }, 3);
 ```
+
+## Tested with
+
+- Bluebird
