@@ -1,5 +1,9 @@
 # retry-as-promised
 
+```sh
+$ npm install --save retry-as-promised
+```
+
 Retry a failed promise
 
 ```js
