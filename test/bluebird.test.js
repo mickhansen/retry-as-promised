@@ -1,6 +1,7 @@
 var chai = require('chai')
   , expect = chai.expect
   , Promise = require('bluebird')
+  , sinon = require('sinon')
   , retry = require('../');
 
 chai.use(require('chai-as-promised'));
@@ -71,6 +72,32 @@ describe('bluebird', function () {
       max: 10
     })).to.eventually.be.equal(soResolved).then(function () {
       expect(count).to.equal(4);
+    });
+  });
+
+  describe('timeout', function () {
+    it('should throw if reject on first attempt', function () {
+      return expect(retry(function () {
+        return Promise.delay(2000);
+      }, {
+        max: 1,
+        timeout: 1000
+      })).to.eventually.be.rejectedWith(Promise.TimeoutError);
+    });
+
+    it('should throw if reject on last attempt', function () {
+      return expect(retry(function () {
+        count++;
+        if (count === 3) {
+          return Promise.delay(3500);
+        }
+        return Promise.reject();
+      }, {
+        max: 3,
+        timeout: 1500
+      })).to.eventually.be.rejectedWith(Promise.TimeoutError).then(function () {
+        expect(count).to.equal(3);
+      });
     });
   });
 });
