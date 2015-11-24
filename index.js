@@ -15,7 +15,7 @@ module.exports = function(callback, options) {
     max: options.max,
     timeout: options.timeout || undefined,
     match: options.match || [],
-    stepbackBase: options.stepbackBase || 1.2,
+    stepbackBase: options.stepbackBase === undefined ? 1.2 : options.stepbackBase,
     stepbackExponent: options.stepbackExponent || 1.5
   };
   
