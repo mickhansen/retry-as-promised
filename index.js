@@ -15,32 +15,31 @@ module.exports = function(callback, options) {
     max: options.max,
     timeout: options.timeout || undefined,
     match: options.match || [],
-    stepbackBase: options.stepbackBase === undefined ? 1.2 : options.stepbackBase,
-    stepbackExponent: options.stepbackExponent || 1.5
+    backoffBase: options.backoffBase === undefined ? 1.2 : options.backoffBase,
+    backoffExponent: options.backoffExponent || 1.5
   };
   
   // Massage match option into array so we can blindly treat it as such later
-  if(!Array.isArray(options.match))
-    options.match = [options.match];
+  if (!Array.isArray(options.match)) options.match = [options.match];
 
   debug('Trying '+callback.name+' (%s)', options.$current);
 
 
   return new Promise(function (resolve, reject) {
-    var timeout, stepbackTimeout;
+    var timeout, backoffTimeout;
     if (options.timeout) {
       timeout = setTimeout(function () {
-        if (stepbackTimeout) clearTimeout(stepbackTimeout);
+        if (backoffTimeout) clearTimeout(backoffTimeout);
         reject(Promise.TimeoutError(callback.name + ' timed out'));
       }, options.timeout);
     }
 
     Promise.resolve(callback()).then(resolve).tap(function () {
       if (timeout) clearTimeout(timeout);
-      if (stepbackTimeout) clearTimeout(stepbackTimeout);
+      if (backoffTimeout) clearTimeout(backoffTimeout);
     }).catch(function (err) {
       if (timeout) clearTimeout(timeout);
-      if (stepbackTimeout) clearTimeout(stepbackTimeout);
+      if (backoffTimeout) clearTimeout(backoffTimeout);
 
       error(err && err.toString() || err);
       
@@ -50,27 +49,24 @@ module.exports = function(callback, options) {
       // Only continue retrying if match is zero length, or we find a match
       var continueTrying = options.match.length === 0;
       options.match.forEach(function(match) {
-        if(typeof match === "string" && match === err.toString())
+        if (typeof match === "string" && match === err.toString())
           continueTrying = true;
-        else if(typeof match !== "string" && err instanceof match)
+        else if (typeof match !== "string" && err instanceof match)
           continueTrying = true;
       });
-      if(!continueTrying) return reject(err);
+      if (!continueTrying) return reject(err);
 
       // Do some accounting
       options.$current++;
       
-      if(options.stepbackBase)
-      {
-        // Use stepback function to ease retry rate
-        options.stepbackBase = Math.pow(options.stepbackBase, options.stepbackExponent);
-        debug('Delay set to %s', options.stepbackBase);
-        stepbackTimeout = setTimeout(function() {
+      if (options.backoffBase) {
+        // Use backoff function to ease retry rate
+        options.backoffBase = Math.pow(options.backoffBase, options.backoffExponent);
+        debug('Delay set to %s', options.backoffBase);
+        backoffTimeout = setTimeout(function() {
           module.exports(callback, options).then(resolve).catch(reject);
-        }, options.stepbackBase);
-      }
-      else
-      {
+        }, options.backoffBase);
+      } else {
         // Just retry with no delay
         debug('Delay not in use');
         module.exports(callback, options).then(resolve).catch(reject);
@@ -79,3 +75,4 @@ module.exports = function(callback, options) {
     });
   });
 };
+

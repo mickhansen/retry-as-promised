@@ -24,7 +24,7 @@ describe('bluebird', function () {
       return Promise.reject(soRejected);
     }, {
       max: 1,
-      stepbackBase: 0
+      backoffBase: 0
     })).to.eventually.be.rejectedWith(soRejected).then(function () {
       expect(count).to.equal(1);
     });
@@ -45,7 +45,7 @@ describe('bluebird', function () {
       return Promise.reject(soRejected);
     }, {
       max: 3,
-      stepbackBase: 0
+      backoffBase: 0
     })).to.eventually.be.rejectedWith(soRejected).then(function () {
       expect(count).to.equal(3);
     });
@@ -57,7 +57,7 @@ describe('bluebird', function () {
       return Promise.resolve(soResolved);
     }, {
       max: 10,
-      stepbackBase: 0
+      backoffBase: 0
     })).to.eventually.be.equal(soResolved).then(function () {
       expect(count).to.equal(1);
     });
@@ -74,7 +74,7 @@ describe('bluebird', function () {
       return Promise.resolve(soResolved);
     }, {
       max: 10,
-      stepbackBase: 0
+      backoffBase: 0
     })).to.eventually.be.equal(soResolved).then(function () {
       expect(count).to.equal(4);
     });
@@ -86,7 +86,7 @@ describe('bluebird', function () {
         return Promise.delay(2000);
       }, {
         max: 1,
-        stepbackBase: 0,
+        backoffBase: 0,
         timeout: 1000
       })).to.eventually.be.rejectedWith(Promise.TimeoutError);
     });
@@ -100,7 +100,7 @@ describe('bluebird', function () {
         return Promise.reject();
       }, {
         max: 3,
-        stepbackBase: 0,
+        backoffBase: 0,
         timeout: 1500
       })).to.eventually.be.rejectedWith(Promise.TimeoutError).then(function () {
         expect(count).to.equal(3);
@@ -120,7 +120,7 @@ describe('bluebird', function () {
         return Promise.resolve(soResolved);
       }, {
         max: 15,
-        stepbackBase: 1,
+        backoffBase: 1,
         match: soRejected
       })).to.eventually.be.equal(soResolved).then(function () {
         expect(count).to.equal(4);
@@ -134,7 +134,7 @@ describe('bluebird', function () {
         return Promise.reject(soRejected);
       }, {
         max: 15,
-        stepbackBase: 1,
+        backoffBase: 1,
         match: "A custom error string"
       })).to.eventually.be.rejectedWith(soRejected).then(function () {
         expect(count).to.equal(1);
@@ -152,7 +152,7 @@ describe('bluebird', function () {
         return Promise.resolve(soResolved);
       }, {
         max: 15,
-        stepbackBase: 1,
+        backoffBase: 1,
         match: Error
       })).to.eventually.be.equal(soResolved).then(function () {
         expect(count).to.equal(4);
@@ -166,7 +166,7 @@ describe('bluebird', function () {
         return Promise.reject(new Error(soRejected));
       }, {
         max: 15,
-        stepbackBase: 1,
+        backoffBase: 1,
         match: function foo(){},
       })).to.eventually.be.rejectedWith(Error).then(function () {
         expect(count).to.equal(1);
@@ -184,7 +184,7 @@ describe('bluebird', function () {
         return Promise.resolve(soResolved);
       }, {
         max: 15,
-        stepbackBase: 1,
+        backoffBase: 1,
         match: Error
       })).to.eventually.be.equal(soResolved).then(function () {
         expect(count).to.equal(4);
@@ -202,7 +202,7 @@ describe('bluebird', function () {
         return Promise.resolve(soResolved);
       }, {
         max: 15,
-        stepbackBase: 1,
+        backoffBase: 1,
         match: [soRejected + 1, soRejected]
       })).to.eventually.be.equal(soResolved).then(function () {
         expect(count).to.equal(4);
@@ -216,7 +216,7 @@ describe('bluebird', function () {
         return Promise.reject(soRejected);
       }, {
         max: 15,
-        stepbackBase: 1,
+        backoffBase: 1,
         match: [soRejected + 1, soRejected + 2]
       })).to.eventually.be.rejectedWith(soRejected).then(function () {
         expect(count).to.equal(1);
@@ -230,7 +230,7 @@ describe('bluebird', function () {
         return Promise.reject(new Error(soRejected));
       }, {
         max: 15,
-        stepbackBase: 1,
+        backoffBase: 1,
         match: [soRejected + 1, function foo(){}],
       })).to.eventually.be.rejectedWith(Error).then(function () {
         expect(count).to.equal(1);
@@ -248,7 +248,7 @@ describe('bluebird', function () {
         return Promise.resolve(soResolved);
       }, {
         max: 15,
-        stepbackBase: 1,
+        backoffBase: 1,
         match: [soRejected + 1, Error]
       })).to.eventually.be.equal(soResolved).then(function () {
         expect(count).to.equal(4);
@@ -256,8 +256,8 @@ describe('bluebird', function () {
     });
   });
 
-  describe('stepback', function () {
-    it('should resolve after 10 retries and an eventual delay over 1.2 seconds using default stepback', function () {
+  describe('backoff', function () {
+    it('should resolve after 10 retries and an eventual delay over 1.2 seconds using default backoff', function () {
         var startTime = moment();
         return expect(retry(function () {
         count++;
@@ -275,12 +275,12 @@ describe('bluebird', function () {
       });
     });
     
-    it('should throw TimeoutError and cancel stepback delay if timeout is reached', function () {
+    it('should throw TimeoutError and cancel backoff delay if timeout is reached', function () {
       return expect(retry(function () {
         return Promise.delay(2000);
       }, {
         max: 15,
-        stepbackBase: 0,
+        backoffBase: 0,
         timeout: 1000
       })).to.eventually.be.rejectedWith(Promise.TimeoutError);
     });
