@@ -21,64 +21,46 @@ describe('bluebird', function () {
   });
 
   it('should reject immediately if max is 1 (using options)', function () {
-    return expect(retry(function () {
-      count++;
-      return Promise.reject(soRejected);
-    }, {
-      max: 1,
-      backoffBase: 0
-    })).to.eventually.be.rejectedWith(soRejected).then(function () {
-      expect(count).to.equal(1);
+    var callback = sinon.stub();
+    callback.resolves(soResolved);
+    callback.onCall(0).rejects(soRejected);
+    return expect(retry(callback, {max: 1, backoffBase: 0})).to.eventually.be.rejectedWith(soRejected).then(function () {
+      expect(callback.callCount).to.equal(1);
     });
   });
 
   it('should reject immediately if max is 1 (using integer)', function () {
-    return expect(retry(function () {
-      count++;
-      return Promise.reject(soRejected);
-    }, 1)).to.eventually.be.rejectedWith(soRejected).then(function () {
-      expect(count).to.equal(1);
+    var callback = sinon.stub();
+    callback.resolves(soResolved);
+    callback.onCall(0).rejects(soRejected);
+    return expect(retry(callback, 1)).to.eventually.be.rejectedWith(soRejected).then(function () {
+      expect(callback.callCount).to.equal(1);
     });
   });
 
   it('should reject after all tries if still rejected', function () {
-    return expect(retry(function () {
-      count++;
-      return Promise.reject(soRejected);
-    }, {
-      max: 3,
-      backoffBase: 0
-    })).to.eventually.be.rejectedWith(soRejected).then(function () {
-      expect(count).to.equal(3);
+    var callback = sinon.stub();
+    callback.rejects(soRejected);
+    return expect(retry(callback, {max: 3, backoffBase: 0})).to.eventually.be.rejectedWith(soRejected).then(function () {
+      expect(callback.callCount).to.equal(3);
     });
   });
 
   it('should resolve immediately if resolved on first try', function () {
-    return expect(retry(function () {
-      count++;
-      return Promise.resolve(soResolved);
-    }, {
-      max: 10,
-      backoffBase: 0
-    })).to.eventually.be.equal(soResolved).then(function () {
-      expect(count).to.equal(1);
+    var callback = sinon.stub();
+    callback.resolves(soResolved);
+    callback.onCall(0).resolves(soResolved);
+    return expect(retry(callback, {max: 10, backoffBase: 0})).to.eventually.equal(soResolved).then(function () {
+      expect(callback.callCount).to.equal(1);
     });
   });
 
   it('should resolve if resolved before hitting max', function () {
-    return expect(retry(function () {
-      count++;
-
-      if (count < 4) {
-        return Promise.reject(soRejected);
-      }
-
-      return Promise.resolve(soResolved);
-    }, {
-      max: 10,
-      backoffBase: 0
-    })).to.eventually.be.equal(soResolved).then(function () {
-      expect(count).to.equal(4);
+    var callback = sinon.stub();
+    callback.rejects(soRejected);
+    callback.onCall(3).resolves(soResolved);
+    return expect(retry(callback, {max: 10, backoffBase: 0})).to.eventually.equal(soResolved).then(function () {
+      expect(callback.callCount).to.equal(4);
     });
   });
 
@@ -112,148 +94,70 @@ describe('bluebird', function () {
   
   describe('match', function () {
     it('should continue retry while error is equal to match string', function () {
-      return expect(retry(function () {
-        count++;
-
-        if (count < 4) {
-          return Promise.reject(soRejected);
-        }
-
-        return Promise.resolve(soResolved);
-      }, {
-        max: 15,
-        backoffBase: 1,
-        match: soRejected
-      })).to.eventually.be.equal(soResolved).then(function () {
-        expect(count).to.equal(4);
+      var callback = sinon.stub();
+      callback.rejects(soRejected);
+      callback.onCall(3).resolves(soResolved);
+      return expect(retry(callback, {max: 15, backoffBase: 0, match: 'Error: ' + soRejected})).to.eventually.equal(soResolved).then(function () {
+        expect(callback.callCount).to.equal(4);
       });
     });
     
     it('should reject immediately if error is not equal to match string', function () {
-      return expect(retry(function () {
-        count++;
-
-        return Promise.reject(soRejected);
-      }, {
-        max: 15,
-        backoffBase: 1,
-        match: "A custom error string"
-      })).to.eventually.be.rejectedWith(soRejected).then(function () {
-        expect(count).to.equal(1);
+      var callback = sinon.stub();
+      callback.rejects(soRejected);
+      return expect(retry(callback, {max: 15, backoffBase: 0, match: 'A custom error string'})).to.eventually.be.rejectedWith(soRejected).then(function () {
+        expect(callback.callCount).to.equal(1);
       });
     });
     
     it('should continue retry while error is instanceof match', function () {
-      return expect(retry(function () {
-        count++;
-
-        if (count < 4) {
-          return Promise.reject(new Error(soRejected));
-        }
-
-        return Promise.resolve(soResolved);
-      }, {
-        max: 15,
-        backoffBase: 1,
-        match: Error
-      })).to.eventually.be.equal(soResolved).then(function () {
-        expect(count).to.equal(4);
+      var callback = sinon.stub();
+      callback.rejects(soRejected);
+      callback.onCall(4).resolves(soResolved);
+      return expect(retry(callback, {max: 15, backoffBase: 0, match: Error})).to.eventually.equal(soResolved).then(function () {
+        expect(callback.callCount).to.equal(5);
       });
     });
 
     it('should reject immediately if error is not instanceof match', function () {
-      return expect(retry(function () {
-        count++;
-
-        return Promise.reject(new Error(soRejected));
-      }, {
-        max: 15,
-        backoffBase: 1,
-        match: function foo(){},
-      })).to.eventually.be.rejectedWith(Error).then(function () {
-        expect(count).to.equal(1);
-      });
-    });
-    
-    it('should continue retry while error is instanceof match', function () {
-      return expect(retry(function () {
-        count++;
-
-        if (count < 4) {
-          return Promise.reject(new Error(soRejected));
-        }
-
-        return Promise.resolve(soResolved);
-      }, {
-        max: 15,
-        backoffBase: 1,
-        match: Error
-      })).to.eventually.be.equal(soResolved).then(function () {
-        expect(count).to.equal(4);
+      var callback = sinon.stub();
+      callback.rejects(soRejected);
+      return expect(retry(callback, {max: 15, backoffBase: 0, match: function foo(){}})).to.eventually.be.rejectedWith(Error).then(function () {
+        expect(callback.callCount).to.equal(1);
       });
     });
     
     it('should continue retry while error is equal to match string in array', function () {
-      return expect(retry(function () {
-        count++;
-
-        if (count < 4) {
-          return Promise.reject(soRejected);
-        }
-
-        return Promise.resolve(soResolved);
-      }, {
-        max: 15,
-        backoffBase: 1,
-        match: [soRejected + 1, soRejected]
-      })).to.eventually.be.equal(soResolved).then(function () {
-        expect(count).to.equal(4);
+      var callback = sinon.stub();
+      callback.rejects(soRejected);
+      callback.onCall(4).resolves(soResolved);
+      return expect(retry(callback, {max: 15, backoffBase: 0, match: ['Error: ' + (soRejected + 1), 'Error: ' + soRejected]})).to.eventually.equal(soResolved).then(function () {
+        expect(callback.callCount).to.equal(5);
       });
     });
 
     it('should reject immediately if error is not equal to match string in array', function () {
-      return expect(retry(function () {
-        count++;
-
-        return Promise.reject(soRejected);
-      }, {
-        max: 15,
-        backoffBase: 1,
-        match: [soRejected + 1, soRejected + 2]
-      })).to.eventually.be.rejectedWith(soRejected).then(function () {
-        expect(count).to.equal(1);
+      var callback = sinon.stub();
+      callback.rejects(soRejected);
+      return expect(retry(callback, {max: 15, backoffBase: 0, match: ['Error: ' + (soRejected + 1), 'Error: ' + (soRejected + 2)]})).to.eventually.be.rejectedWith(Error).then(function () {
+        expect(callback.callCount).to.equal(1);
       });
     });
 
     it('should reject immediately if error is not instanceof match in array', function () {
-      return expect(retry(function () {
-        count++;
-
-        return Promise.reject(new Error(soRejected));
-      }, {
-        max: 15,
-        backoffBase: 1,
-        match: [soRejected + 1, function foo(){}],
-      })).to.eventually.be.rejectedWith(Error).then(function () {
-        expect(count).to.equal(1);
+      var callback = sinon.stub();
+      callback.rejects(soRejected);
+      return expect(retry(callback, {max: 15, backoffBase: 0, match: ['Error: ' + (soRejected + 1), function foo(){}]})).to.eventually.be.rejectedWith(Error).then(function () {
+        expect(callback.callCount).to.equal(1);
       });
     });
 
     it('should continue retry while error is instanceof match in array', function () {
-      return expect(retry(function () {
-        count++;
-
-        if (count < 4) {
-          return Promise.reject(new Error(soRejected));
-        }
-
-        return Promise.resolve(soResolved);
-      }, {
-        max: 15,
-        backoffBase: 1,
-        match: [soRejected + 1, Error]
-      })).to.eventually.be.equal(soResolved).then(function () {
-        expect(count).to.equal(4);
+      var callback = sinon.stub();
+      callback.rejects(soRejected);
+      callback.onCall(4).resolves(soResolved);
+      return expect(retry(callback, {max: 15, backoffBase: 0, match: ['Error: ' + (soRejected + 1), Error]})).to.eventually.equal(soResolved).then(function () {
+        expect(callback.callCount).to.equal(5);
       });
     });
   });
@@ -261,18 +165,11 @@ describe('bluebird', function () {
   describe('backoff', function () {
     it('should resolve after 10 retries and an eventual delay over 1.2 seconds using default backoff', function () {
       var startTime = moment();
-      return expect(retry(function () {
-        count++;
-
-        if (count < 10) {
-          return Promise.reject(soRejected);
-        }
-
-        return Promise.resolve(soResolved);
-      }, {
-        max: 15
-      })).to.eventually.be.equal(soResolved).then(function () {
-        expect(count).to.equal(10);
+      var callback = sinon.stub();
+      callback.rejects(soRejected);
+      callback.onCall(9).resolves(soResolved);
+      return expect(retry(callback, {max: 15})).to.eventually.equal(soResolved).then(function () {
+        expect(callback.callCount).to.equal(10);
         expect(moment().diff(startTime)).to.be.above(1200);
       });
     });
@@ -282,7 +179,6 @@ describe('bluebird', function () {
         return Promise.delay(2000);
       }, {
         max: 15,
-        backoffBase: 0,
         timeout: 1000
       })).to.eventually.be.rejectedWith(Promise.TimeoutError);
     });
