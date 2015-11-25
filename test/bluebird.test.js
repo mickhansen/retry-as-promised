@@ -3,9 +3,11 @@ var chai = require('chai')
   , Promise = require('bluebird')
   , moment = require('moment')
   , sinon = require('sinon')
+  , sinonChai = require('sinon-chai')
   , retry = require('../');
 
 chai.use(require('chai-as-promised'));
+require('sinon-as-promised')(Promise);
 
 describe('bluebird', function () {
   var count
@@ -110,7 +112,7 @@ describe('bluebird', function () {
   
   describe('match', function () {
     it('should continue retry while error is equal to match string', function () {
-        return expect(retry(function () {
+      return expect(retry(function () {
         count++;
 
         if (count < 4) {
@@ -128,7 +130,7 @@ describe('bluebird', function () {
     });
     
     it('should reject immediately if error is not equal to match string', function () {
-        return expect(retry(function () {
+      return expect(retry(function () {
         count++;
 
         return Promise.reject(soRejected);
@@ -142,7 +144,7 @@ describe('bluebird', function () {
     });
     
     it('should continue retry while error is instanceof match', function () {
-        return expect(retry(function () {
+      return expect(retry(function () {
         count++;
 
         if (count < 4) {
@@ -160,7 +162,7 @@ describe('bluebird', function () {
     });
 
     it('should reject immediately if error is not instanceof match', function () {
-        return expect(retry(function () {
+      return expect(retry(function () {
         count++;
 
         return Promise.reject(new Error(soRejected));
@@ -174,7 +176,7 @@ describe('bluebird', function () {
     });
     
     it('should continue retry while error is instanceof match', function () {
-        return expect(retry(function () {
+      return expect(retry(function () {
         count++;
 
         if (count < 4) {
@@ -192,7 +194,7 @@ describe('bluebird', function () {
     });
     
     it('should continue retry while error is equal to match string in array', function () {
-        return expect(retry(function () {
+      return expect(retry(function () {
         count++;
 
         if (count < 4) {
@@ -210,7 +212,7 @@ describe('bluebird', function () {
     });
 
     it('should reject immediately if error is not equal to match string in array', function () {
-        return expect(retry(function () {
+      return expect(retry(function () {
         count++;
 
         return Promise.reject(soRejected);
@@ -224,7 +226,7 @@ describe('bluebird', function () {
     });
 
     it('should reject immediately if error is not instanceof match in array', function () {
-        return expect(retry(function () {
+      return expect(retry(function () {
         count++;
 
         return Promise.reject(new Error(soRejected));
@@ -238,7 +240,7 @@ describe('bluebird', function () {
     });
 
     it('should continue retry while error is instanceof match in array', function () {
-        return expect(retry(function () {
+      return expect(retry(function () {
         count++;
 
         if (count < 4) {
@@ -258,8 +260,8 @@ describe('bluebird', function () {
 
   describe('backoff', function () {
     it('should resolve after 10 retries and an eventual delay over 1.2 seconds using default backoff', function () {
-        var startTime = moment();
-        return expect(retry(function () {
+      var startTime = moment();
+      return expect(retry(function () {
         count++;
 
         if (count < 10) {
