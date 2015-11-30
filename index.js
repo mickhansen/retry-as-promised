@@ -51,6 +51,8 @@ module.exports = function(callback, options) {
       options.match.forEach(function(match) {
         if (typeof match === "string" && match === err.toString())
           continueTrying = true;
+        else if (err instanceof Error && match === err.message)
+          continueTrying = true;
         else if (typeof match !== "string" && err instanceof match)
           continueTrying = true;
       });
