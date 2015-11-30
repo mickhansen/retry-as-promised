@@ -15,8 +15,8 @@ module.exports = function(callback, options) {
     max: options.max,
     timeout: options.timeout || undefined,
     match: options.match || [],
-    backoffBase: options.backoffBase === undefined ? 1.2 : options.backoffBase,
-    backoffExponent: options.backoffExponent || 1.5
+    backoffBase: options.backoffBase === undefined ? 100 : options.backoffBase,
+    backoffExponent: options.backoffExponent || 1.1
   };
   
   // Massage match option into array so we can blindly treat it as such later

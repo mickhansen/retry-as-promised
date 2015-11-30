@@ -163,14 +163,14 @@ describe('bluebird', function () {
   });
 
   describe('backoff', function () {
-    it('should resolve after 10 retries and an eventual delay over 1.2 seconds using default backoff', function () {
+    it('should resolve after 10 retries and an eventual delay over 3400ms using default backoff', function () {
       var startTime = moment();
       var callback = sinon.stub();
       callback.rejects(soRejected);
-      callback.onCall(9).resolves(soResolved);
+      callback.onCall(5).resolves(soResolved);
       return expect(retry(callback, {max: 15})).to.eventually.equal(soResolved).then(function () {
-        expect(callback.callCount).to.equal(10);
-        expect(moment().diff(startTime)).to.be.above(1200);
+        expect(callback.callCount).to.equal(6);
+        expect(moment().diff(startTime)).to.be.above(3400);
       });
     });
     
