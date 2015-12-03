@@ -2,7 +2,7 @@ var debug = require('debug')('retry-as-promised')
   , error = require('debug')('retry-as-promised:error')
   , Promise = require('bluebird');
 
-module.exports = function(callback, options) {
+module.exports = function retryAsPromised(callback, options) {
   if (!callback || !options) throw new Error('retry-as-promised must be passed a callback and a options set or a number');
 
   if (typeof options === 'number') {
@@ -24,9 +24,10 @@ module.exports = function(callback, options) {
 
   debug('Trying '+callback.name+' (%s)', options.$current);
 
-
   return new Promise(function (resolve, reject) {
-    var timeout, backoffTimeout;
+    var timeout
+      , backoffTimeout;
+
     if (options.timeout) {
       timeout = setTimeout(function () {
         if (backoffTimeout) clearTimeout(backoffTimeout);
@@ -43,20 +44,25 @@ module.exports = function(callback, options) {
 
       error(err && err.toString() || err);
       
-      // Check if we have retried the max number of times
-      if (options.$current === options.max) return reject(err);
+      // Should not retry if max has been reached
+      var shouldRetry = options.$current < options.max; 
       
-      // Only continue retrying if match is zero length, or we find a match
-      var continueTrying = options.match.length === 0;
-      options.match.forEach(function(match) {
-        if (typeof match === "string" && match === err.toString())
-          continueTrying = true;
-        else if (err instanceof Error && match === err.message)
-          continueTrying = true;
-        else if (typeof match !== "string" && err instanceof match)
-          continueTrying = true;
-      });
-      if (!continueTrying) return reject(err);
+      if (shouldRetry && options.match.length && err) {
+        // If match is defined we should fail if it is not met
+        shouldRetry = options.match.reduce(function (shouldRetry, match) {
+          if (shouldRetry) return shouldRetry;
+
+          if (match === err.toString() ||
+              match === err.message ||
+              typeof match === "function" && err instanceof match
+          ) {
+            shouldRetry = true;
+          }
+          return shouldRetry;
+        }, false);
+      }
+
+      if (!shouldRetry) return reject(err);
 
       // Do some accounting
       options.$current++;
@@ -64,14 +70,12 @@ module.exports = function(callback, options) {
       if (options.backoffBase) {
         // Use backoff function to ease retry rate
         options.backoffBase = Math.pow(options.backoffBase, options.backoffExponent);
-        debug('Delay set to %s', options.backoffBase);
+        debug('Delaying retry of '+callback.name+' by %s', options.backoffBase);
         backoffTimeout = setTimeout(function() {
-          module.exports(callback, options).then(resolve).catch(reject);
+          retryAsPromised(callback, options).then(resolve).catch(reject);
         }, options.backoffBase);
       } else {
-        // Just retry with no delay
-        debug('Delay not in use');
-        module.exports(callback, options).then(resolve).catch(reject);
+        retryAsPromised(callback, options).then(resolve).catch(reject);
       }
 
     });
