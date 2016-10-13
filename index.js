@@ -16,13 +16,17 @@ module.exports = function retryAsPromised(callback, options) {
     timeout: options.timeout || undefined,
     match: options.match || [],
     backoffBase: options.backoffBase === undefined ? 100 : options.backoffBase,
-    backoffExponent: options.backoffExponent || 1.1
+    backoffExponent: options.backoffExponent || 1.1,
+    report: options.report || false,
+    reportFn: options.reportFn || console.log,
+    name:  callback.name || options.name || 'unknown'
   };
   
   // Massage match option into array so we can blindly treat it as such later
   if (!Array.isArray(options.match)) options.match = [options.match];
 
-  debug('Trying '+callback.name+' (%s)', options.$current);
+  debug('Trying '+ options.name+' (%s)', options.$current);
+  if(options.report) options.reportFn('Trying ' + options.name + ' #' + options.$current + ' at ' + new Date().toLocaleTimeString());
 
   return new Promise(function (resolve, reject) {
     var timeout
@@ -31,7 +35,7 @@ module.exports = function retryAsPromised(callback, options) {
     if (options.timeout) {
       timeout = setTimeout(function () {
         if (backoffTimeout) clearTimeout(backoffTimeout);
-        reject(Promise.TimeoutError(callback.name + ' timed out'));
+        reject(Promise.TimeoutError( options.name + ' timed out'));
       }, options.timeout);
     }
 
@@ -54,7 +58,8 @@ module.exports = function retryAsPromised(callback, options) {
 
           if (match === err.toString() ||
               match === err.message ||
-              typeof match === "function" && err instanceof match
+              (typeof match === "function" && err instanceof match) ||
+              (match instanceof RegExp && (match.test(err.message) || match.test(err.toString()) ))
           ) {
             shouldRetry = true;
           }
@@ -70,7 +75,8 @@ module.exports = function retryAsPromised(callback, options) {
       if (options.backoffBase) {
         // Use backoff function to ease retry rate
         options.backoffBase = Math.pow(options.backoffBase, options.backoffExponent);
-        debug('Delaying retry of '+callback.name+' by %s', options.backoffBase);
+        debug('Delaying retry of '+ options.name+' by %s', options.backoffBase);
+        if(options.report) options.reportFn('Delaying retry of ' + options.name + ' by ' + options.backoffBase);
         backoffTimeout = setTimeout(function() {
           retryAsPromised(callback, options).then(resolve).catch(reject);
         }, options.backoffBase);
