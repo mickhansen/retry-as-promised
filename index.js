@@ -11,21 +11,21 @@ module.exports = function retryAsPromised(callback, options) {
 
   // Super cheap clone
   options = {
-    $current: options.$current || 1,
-    max: options.max,
-    timeout: options.timeout || undefined,
-    match: options.match || [],
-    backoffBase: options.backoffBase === undefined ? 100 : options.backoffBase,
-    backoffExponent: options.backoffExponent || 1.1,
-    report: options.report || console.log,
-    name:  options.name || callback.name || 'unknown'
+    $current:         options.$current || 1,
+    max:              options.max,
+    timeout:          options.timeout || undefined,
+    match:            options.match || [],
+    backoffBase:      options.backoffBase === undefined ? 100 : options.backoffBase,
+    backoffExponent:  options.backoffExponent || 1.1,
+    report:           options.report || null,
+    name:             options.name || callback.name || 'unknown'
   };
   
   // Massage match option into array so we can blindly treat it as such later
   if (!Array.isArray(options.match)) options.match = [options.match];
 
-  debug('Trying '+ options.name+' (%s)', options.$current);
-  options.report('Trying ' + options.name + ' #' + options.$current + ' at ' + new Date().toLocaleTimeString(), options);
+  debug('Trying '+ options.name + ' (%s)', options.$current);
+  if(options.report) options.report('Trying ' + options.name + ' #' + options.$current + ' at ' + new Date().toLocaleTimeString(), options);
 
   return new Promise(function (resolve, reject) {
     var timeout, backoffTimeout;
@@ -74,7 +74,7 @@ module.exports = function retryAsPromised(callback, options) {
         // Use backoff function to ease retry rate
         options.backoffBase = Math.pow(options.backoffBase, options.backoffExponent);
         debug('Delaying retry of '+ options.name+' by %s', options.backoffBase);
-        options.report('Delaying retry of ' + options.name + ' by ' + options.backoffBase, options);
+        if(options.report) options.report('Delaying retry of ' + options.name + ' by ' + options.backoffBase, options);
         backoffTimeout = setTimeout(function() {
           retryAsPromised(callback, options).then(resolve).catch(reject);
         }, options.backoffBase);
