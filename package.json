@@ -4,7 +4,7 @@
   "description": "Retry a failed promise",
   "main": "index.js",
   "scripts": {
-    "test": "DEBUG=retry-as-promised,retry-as-promised:* NODE_ENV=test ./node_modules/.bin/mocha --check-leaks --colors -t 10000 --reporter spec test/**/*.test.js test/*.test.js"
+    "test": "cross-env DEBUG=retry-as-promised,retry-as-promised:* NODE_ENV=test ./node_modules/.bin/mocha --check-leaks --colors -t 10000 --reporter spec test/**/*.test.js test/*.test.js"
   },
   "repository": {
     "type": "git",
@@ -22,7 +22,8 @@
   },
   "homepage": "https://github.com/mickhansen/retry-as-promised",
   "dependencies": {
-    "bluebird": "^3.1.1",
+    "bluebird": "^3.4.6",
+    "cross-env": "^3.1.2",
     "debug": "^2.2.0"
   },
   "devDependencies": {
