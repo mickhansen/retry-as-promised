@@ -20,7 +20,7 @@ module.exports = function retryAsPromised(callback, options) {
     report:           options.report || null,
     name:             options.name || callback.name || 'unknown'
   };
-  
+
   // Massage match option into array so we can blindly treat it as such later
   if (!Array.isArray(options.match)) options.match = [options.match];
 
@@ -45,10 +45,11 @@ module.exports = function retryAsPromised(callback, options) {
       if (backoffTimeout) clearTimeout(backoffTimeout);
 
       error(err && err.toString() || err);
-      
+      if (options.report) options.report('Try ' + options.name + ' #' + options.$current + ' failed: ' + err.toString(), options, err);
+
       // Should not retry if max has been reached
-      var shouldRetry = options.$current < options.max; 
-      
+      var shouldRetry = options.$current < options.max;
+
       if (shouldRetry && options.match.length && err) {
         // If match is defined we should fail if it is not met
         shouldRetry = options.match.reduce(function (shouldRetry, match) {
@@ -69,7 +70,7 @@ module.exports = function retryAsPromised(callback, options) {
 
       // Do some accounting
       options.$current++;
-      
+
       if (options.backoffBase) {
         // Use backoff function to ease retry rate
         options.backoffBase = Math.pow(options.backoffBase, options.backoffExponent);
@@ -85,4 +86,3 @@ module.exports = function retryAsPromised(callback, options) {
     });
   });
 };
-
