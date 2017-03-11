@@ -11,8 +11,8 @@ module.exports = function retryAsPromised(callback, options) {
 
   // Super cheap clone
   options = {
-    $current:         options.$current || 1,
-    max:              options.max,
+    $current:         options.$current || 0, // default to 0
+    max:              options.max, // number of retries
     timeout:          options.timeout || undefined,
     match:            options.match || [],
     backoffBase:      options.backoffBase === undefined ? 100 : options.backoffBase,
@@ -25,7 +25,7 @@ module.exports = function retryAsPromised(callback, options) {
   if (!Array.isArray(options.match)) options.match = [options.match];
 
   debug('Trying '+ options.name + ' (%s)', options.$current);
-  if(options.report) options.report('Trying ' + options.name + ' #' + options.$current + ' at ' + new Date().toLocaleTimeString(), options);
+  if(options.report && options.$current > 0) options.report('Retrying ' + options.name + ' #' + options.$current + ' at ' + new Date().toLocaleTimeString(), options);
 
   return new Promise(function (resolve, reject) {
     var timeout, backoffTimeout;
@@ -45,7 +45,6 @@ module.exports = function retryAsPromised(callback, options) {
       if (backoffTimeout) clearTimeout(backoffTimeout);
 
       error(err && err.toString() || err);
-      if (options.report) options.report('Try ' + options.name + ' #' + options.$current + ' failed: ' + err.toString(), options, err);
 
       // Should not retry if max has been reached
       var shouldRetry = options.$current < options.max;
@@ -75,7 +74,7 @@ module.exports = function retryAsPromised(callback, options) {
         // Use backoff function to ease retry rate
         options.backoffBase = Math.pow(options.backoffBase, options.backoffExponent);
         debug('Delaying retry of '+ options.name+' by %s', options.backoffBase);
-        if(options.report) options.report('Delaying retry of ' + options.name + ' by ' + options.backoffBase, options);
+
         backoffTimeout = setTimeout(function() {
           retryAsPromised(callback, options).then(resolve).catch(reject);
         }, options.backoffBase);
