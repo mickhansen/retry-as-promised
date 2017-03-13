@@ -11,8 +11,8 @@ module.exports = function retryAsPromised(callback, options) {
 
   // Super cheap clone
   options = {
-    $current:         options.$current || 0, // default to 0
-    max:              options.max, // number of retries
+    $current:         options.$current || 1,
+    max:              options.max,
     timeout:          options.timeout || undefined,
     match:            options.match || [],
     backoffBase:      options.backoffBase === undefined ? 100 : options.backoffBase,
@@ -25,7 +25,7 @@ module.exports = function retryAsPromised(callback, options) {
   if (!Array.isArray(options.match)) options.match = [options.match];
 
   debug('Trying '+ options.name + ' (%s)', options.$current);
-  if(options.report && options.$current > 0) options.report('Retrying ' + options.name + ' #' + options.$current + ' at ' + new Date().toLocaleTimeString(), options);
+  if(options.report) options.report('Retrying ' + options.name + ' #' + options.$current + ' at ' + new Date().toLocaleTimeString(), options);
 
   return new Promise(function (resolve, reject) {
     var timeout, backoffTimeout;
