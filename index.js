@@ -25,7 +25,7 @@ module.exports = function retryAsPromised(callback, options) {
   if (!Array.isArray(options.match)) options.match = [options.match];
 
   debug('Trying '+ options.name + ' (%s)', options.$current);
-  if(options.report) options.report('Retrying ' + options.name + ' #' + options.$current + ' at ' + new Date().toLocaleTimeString(), options);
+  if(options.report) options.report('Trying ' + options.name + ' #' + options.$current + ' at ' + new Date().toLocaleTimeString(), options);
 
   return new Promise(function (resolve, reject) {
     var timeout, backoffTimeout;
