@@ -42,6 +42,9 @@ describe('bluebird', function () {
     var callback = sinon.stub();
     callback.rejects(soRejected);
     return expect(retry(callback, {max: 3, backoffBase: 0})).to.eventually.be.rejectedWith(soRejected).then(function () {
+      expect(callback.firstCall.args).to.deep.equal([{ current: 1 }]);
+      expect(callback.secondCall.args).to.deep.equal([{ current: 2 }]);
+      expect(callback.thirdCall.args).to.deep.equal([{ current: 3 }]);
       expect(callback.callCount).to.equal(3);
     });
   });
@@ -60,6 +63,9 @@ describe('bluebird', function () {
     callback.rejects(soRejected);
     callback.onCall(3).resolves(soResolved);
     return expect(retry(callback, {max: 10, backoffBase: 0})).to.eventually.equal(soResolved).then(function () {
+      expect(callback.firstCall.args).to.deep.equal([{ current: 1 }]);
+      expect(callback.secondCall.args).to.deep.equal([{ current: 2 }]);
+      expect(callback.thirdCall.args).to.deep.equal([{ current: 3 }]);
       expect(callback.callCount).to.equal(4);
     });
   });
@@ -91,7 +97,7 @@ describe('bluebird', function () {
       });
     });
   });
-  
+
   describe('match', function () {
     it('should continue retry while error is equal to match string', function () {
       var callback = sinon.stub();
@@ -101,7 +107,7 @@ describe('bluebird', function () {
         expect(callback.callCount).to.equal(4);
       });
     });
-    
+
     it('should reject immediately if error is not equal to match string', function () {
       var callback = sinon.stub();
       callback.rejects(soRejected);
@@ -109,7 +115,7 @@ describe('bluebird', function () {
         expect(callback.callCount).to.equal(1);
       });
     });
-    
+
     it('should continue retry while error is instanceof match', function () {
       var callback = sinon.stub();
       callback.rejects(soRejected);
@@ -126,7 +132,7 @@ describe('bluebird', function () {
         expect(callback.callCount).to.equal(1);
       });
     });
-    
+
     it('should continue retry while error is equal to match string in array', function () {
       var callback = sinon.stub();
       callback.rejects(soRejected);
@@ -173,7 +179,7 @@ describe('bluebird', function () {
         expect(moment().diff(startTime)).to.be.above(3400);
       });
     });
-    
+
     it('should throw TimeoutError and cancel backoff delay if timeout is reached', function () {
       return expect(retry(function () {
         return Promise.delay(2000);

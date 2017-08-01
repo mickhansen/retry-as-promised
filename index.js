@@ -37,7 +37,7 @@ module.exports = function retryAsPromised(callback, options) {
       }, options.timeout);
     }
 
-    Promise.resolve(callback()).then(resolve).tap(function () {
+    Promise.resolve(callback({ current: options.$current })).then(resolve).tap(function () {
       if (timeout) clearTimeout(timeout);
       if (backoffTimeout) clearTimeout(backoffTimeout);
     }).catch(function (err) {

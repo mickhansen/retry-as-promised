@@ -12,7 +12,8 @@ var retry = require('retry-as-promised');
 var warningFn = function(msg){ someLoggingFunction(msg, 'notice'); };
 
 // Will call the until max retries or the promise is resolved.
-return retry(function () {
+return retry(function (options) {
+  // options.current, times callback has been called including this call
   return promise;
 }, {
   max: 3, // maximum amount of tries
