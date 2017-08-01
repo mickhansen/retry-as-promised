@@ -42,9 +42,9 @@ describe('bluebird', function () {
     var callback = sinon.stub();
     callback.rejects(soRejected);
     return expect(retry(callback, {max: 3, backoffBase: 0})).to.eventually.be.rejectedWith(soRejected).then(function () {
-      expect(callback.firstCall.args).to.deep.equal([{ $current: 1 }]);
-      expect(callback.secondCall.args).to.deep.equal([{ $current: 2 }]);
-      expect(callback.thirdCall.args).to.deep.equal([{ $current: 3 }]);
+      expect(callback.firstCall.args).to.deep.equal([{ current: 1 }]);
+      expect(callback.secondCall.args).to.deep.equal([{ current: 2 }]);
+      expect(callback.thirdCall.args).to.deep.equal([{ current: 3 }]);
       expect(callback.callCount).to.equal(3);
     });
   });
@@ -63,9 +63,9 @@ describe('bluebird', function () {
     callback.rejects(soRejected);
     callback.onCall(3).resolves(soResolved);
     return expect(retry(callback, {max: 10, backoffBase: 0})).to.eventually.equal(soResolved).then(function () {
-      expect(callback.firstCall.args).to.deep.equal([{ $current: 1 }]);
-      expect(callback.secondCall.args).to.deep.equal([{ $current: 2 }]);
-      expect(callback.thirdCall.args).to.deep.equal([{ $current: 3 }]);
+      expect(callback.firstCall.args).to.deep.equal([{ current: 1 }]);
+      expect(callback.secondCall.args).to.deep.equal([{ current: 2 }]);
+      expect(callback.thirdCall.args).to.deep.equal([{ current: 3 }]);
       expect(callback.callCount).to.equal(4);
     });
   });
