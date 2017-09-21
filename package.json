@@ -1,6 +1,6 @@
 {
   "name": "retry-as-promised",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "Retry a failed promise",
   "main": "index.js",
   "scripts": {
