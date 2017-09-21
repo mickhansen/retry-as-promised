@@ -23,8 +23,7 @@ module.exports = function retryAsPromised(callback, options) {
 
   // Massage match option into array so we can blindly treat it as such later
   if (!Array.isArray(options.match)) options.match = [options.match];
-
-  debug('Trying '+ options.name + ' (%s)', options.$current);
+  
   if(options.report) options.report('Trying ' + options.name + ' #' + options.$current + ' at ' + new Date().toLocaleTimeString(), options);
 
   return new Promise(function (resolve, reject) {
@@ -70,7 +69,7 @@ module.exports = function retryAsPromised(callback, options) {
 
       // Do some accounting
       options.$current++;
-
+      debug('Retrying '+ options.name + ' (%s)', options.$current);
       if (options.backoffBase) {
         // Use backoff function to ease retry rate
         options.backoffBase = Math.pow(options.backoffBase, options.backoffExponent);
