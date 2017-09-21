@@ -69,7 +69,7 @@ module.exports = function retryAsPromised(callback, options) {
 
       // Do some accounting
       options.$current++;
-      debug('Rerying '+ options.name + ' (%s)', options.$current);
+      debug('Retrying '+ options.name + ' (%s)', options.$current);
       if (options.backoffBase) {
         // Use backoff function to ease retry rate
         options.backoffBase = Math.pow(options.backoffBase, options.backoffExponent);
