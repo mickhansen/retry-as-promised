@@ -67,17 +67,18 @@ module.exports = function retryAsPromised(callback, options) {
 
       if (!shouldRetry) return reject(err);
 
+      var retryDelay = Math.pow(options.backoffBase, Math.pow(options.backoffExponent, (options.$current - 1)));
+
       // Do some accounting
       options.$current++;
       debug('Retrying '+ options.name + ' (%s)', options.$current);
-      if (options.backoffBase) {
+      if (retryDelay) {
         // Use backoff function to ease retry rate
-        options.backoffBase = Math.pow(options.backoffBase, options.backoffExponent);
-        debug('Delaying retry of '+ options.name+' by %s', options.backoffBase);
-        if(options.report) options.report('Delaying retry of ' + options.name + ' by ' + options.backoffBase, options);
+        debug('Delaying retry of ' + options.name + ' by %s', retryDelay);
+        if(options.report) options.report('Delaying retry of ' + options.name + ' by ' + retryDelay, options);
         backoffTimeout = setTimeout(function() {
           retryAsPromised(callback, options).then(resolve).catch(reject);
-        }, options.backoffBase);
+        }, retryDelay);
       } else {
         retryAsPromised(callback, options).then(resolve).catch(reject);
       }
