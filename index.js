@@ -23,8 +23,7 @@ module.exports = function retryAsPromised(callback, options) {
 
   // Massage match option into array so we can blindly treat it as such later
   if (!Array.isArray(options.match)) options.match = [options.match];
-
-  debug('Trying '+ options.name + ' (%s)', options.$current);
+  
   if(options.report) options.report('Trying ' + options.name + ' #' + options.$current + ' at ' + new Date().toLocaleTimeString(), options);
 
   return new Promise(function (resolve, reject) {
@@ -37,7 +36,7 @@ module.exports = function retryAsPromised(callback, options) {
       }, options.timeout);
     }
 
-    Promise.resolve(callback()).then(resolve).tap(function () {
+    Promise.resolve(callback({ current: options.$current })).then(resolve).tap(function () {
       if (timeout) clearTimeout(timeout);
       if (backoffTimeout) clearTimeout(backoffTimeout);
     }).catch(function (err) {
@@ -67,17 +66,17 @@ module.exports = function retryAsPromised(callback, options) {
 
       if (!shouldRetry) return reject(err);
 
+      var retryDelay = Math.pow(options.backoffBase, Math.pow(options.backoffExponent, (options.$current - 1)));
+
       // Do some accounting
       options.$current++;
-
-      if (options.backoffBase) {
+      debug('Retrying '+ options.name + ' (%s)', options.$current);
+      if (retryDelay) {
         // Use backoff function to ease retry rate
-        options.backoffBase = Math.pow(options.backoffBase, options.backoffExponent);
-        debug('Delaying retry of '+ options.name+' by %s', options.backoffBase);
-
+        debug('Delaying retry of ' + options.name + ' by %s', retryDelay);
         backoffTimeout = setTimeout(function() {
           retryAsPromised(callback, options).then(resolve).catch(reject);
-        }, options.backoffBase);
+        }, retryDelay);
       } else {
         retryAsPromised(callback, options).then(resolve).catch(reject);
       }
