@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/mickhansen/retry-as-promised",
   "dependencies": {
-    "bluebird": "^3.4.6",
+    "bluebird": "^3.5.1",
     "debug": "^2.6.9"
   },
   "devDependencies": {

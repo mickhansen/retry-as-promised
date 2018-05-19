@@ -70,7 +70,7 @@ describe('bluebird', function () {
     });
   });
 
-  describe('timeout', function () {
+  describe('options.timeout', function () {
     it('should throw if reject on first attempt', function () {
       return expect(retry(function () {
         return Promise.delay(2000);
@@ -98,7 +98,7 @@ describe('bluebird', function () {
     });
   });
 
-  describe('match', function () {
+  describe('options.match', function () {
     it('should continue retry while error is equal to match string', function () {
       var callback = sinon.stub();
       callback.rejects(soRejected);
@@ -168,7 +168,7 @@ describe('bluebird', function () {
     });
   });
 
-  describe('backoff', function () {
+  describe('options.backoff', function () {
     it('should resolve after 5 retries and an eventual delay over 1800ms using default backoff', function () {
       var startTime = moment();
       var callback = sinon.stub();
@@ -202,6 +202,57 @@ describe('bluebird', function () {
         max: 15,
         timeout: 1000
       })).to.eventually.be.rejectedWith(Promise.TimeoutError);
+    });
+  });
+
+  describe('options.Promise', function () {
+    it('should use Promise instance for creating promises', function () {
+      var bluebird = Promise.getNewLibraryCopy();
+      var reply = retry(function () {
+        return bluebird.delay(2000);
+      }, {
+        Promise: bluebird
+      });
+
+      expect(reply).to.be.an.instanceOf(bluebird);
+      expect(reply).not.to.be.an.instanceOf(Promise);
+
+      return reply;
+    });
+
+    describe('timeout', function () {
+      it('should be able to handle timeout error', function () {
+        var bluebird = Promise.getNewLibraryCopy();
+        var reply = retry(function () {
+          return bluebird.delay(2000);
+        }, {
+          Promise: bluebird,
+          timeout: 1000
+        });
+
+        return Promise.all([
+          expect(reply).to.eventually.be.rejectedWith(bluebird.TimeoutError),
+          expect(reply).to.eventually.be.rejectedWith(Promise.TimeoutError)
+        ]);
+      });
+    });
+
+    describe('retry', function () {
+      it('should return correct promise instance after retries', function () {
+        var bluebird = Promise.getNewLibraryCopy();
+        var reply = retry(function () {
+          return bluebird.delay(2000).then(() => {
+            throw new Error('errr');
+          })
+        }, {
+          Promise: bluebird
+        });
+
+        expect(reply).to.be.an.instanceOf(bluebird);
+        expect(reply).not.to.be.an.instanceOf(Promise);
+
+        return expect(reply).to.be.rejectedWith('errr');
+      });
     });
   });
 });

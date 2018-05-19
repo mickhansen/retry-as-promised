@@ -1,6 +1,6 @@
 var debug = require('debug')('retry-as-promised')
   , error = require('debug')('retry-as-promised:error')
-  , Promise = require('bluebird');
+  , Bluebird = require('bluebird');
 
 module.exports = function retryAsPromised(callback, options) {
   if (!callback || !options) throw new Error('retry-as-promised must be passed a callback and a options set or a number');
@@ -18,12 +18,15 @@ module.exports = function retryAsPromised(callback, options) {
     backoffBase:      options.backoffBase === undefined ? 100 : options.backoffBase,
     backoffExponent:  options.backoffExponent || 1.1,
     report:           options.report || null,
-    name:             options.name || callback.name || 'unknown'
+    name:             options.name || callback.name || 'unknown',
+    Promise:          options.Promise || Bluebird
   };
+
+  var Promise = options.Promise || Bluebird;
 
   // Massage match option into array so we can blindly treat it as such later
   if (!Array.isArray(options.match)) options.match = [options.match];
-  
+
   if(options.report) options.report('Trying ' + options.name + ' #' + options.$current + ' at ' + new Date().toLocaleTimeString(), options);
 
   return new Promise(function (resolve, reject) {
@@ -32,7 +35,7 @@ module.exports = function retryAsPromised(callback, options) {
     if (options.timeout) {
       timeout = setTimeout(function () {
         if (backoffTimeout) clearTimeout(backoffTimeout);
-        reject(Promise.TimeoutError( options.name + ' timed out'));
+        reject(Bluebird.TimeoutError( options.name + ' timed out'));
       }, options.timeout);
     }
 
