@@ -35,7 +35,8 @@ module.exports = function retryAsPromised(callback, options) {
     backoffBase: options.backoffBase === undefined ? 100 : options.backoffBase,
     backoffExponent: options.backoffExponent || 1.1,
     report: options.report || null,
-    name: options.name || callback.name || 'unknown'
+    name: options.name || callback.name || 'unknown',
+    errorHandler: options.errorHandler || null
   };
 
   // Massage match option into array so we can blindly treat it as such later
@@ -62,6 +63,9 @@ module.exports = function retryAsPromised(callback, options) {
         if (backoffTimeout) clearTimeout(backoffTimeout);
       })
       .catch(function(err) {
+        if (options.errorHandler) {
+          options.errorHandler(err);
+        }
         if (timeout) clearTimeout(timeout);
         if (backoffTimeout) clearTimeout(backoffTimeout);
 
