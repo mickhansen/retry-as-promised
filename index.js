@@ -38,8 +38,9 @@ module.exports = function retryAsPromised(callback, options) {
     name: options.name || callback.name || 'unknown'
   };
 
-  // Massage match option into array so we can blindly treat it as such later
-  if (!Array.isArray(options.match)) options.match = [options.match];
+  if (typeof options.match !== 'function' && !Array.isArray(options.match)) {
+    options.match = [options.match];
+  }
 
   if (options.report) {
     options.report('Trying ' + options.name + ' #' + options.$current + ' at ' + new Date().toLocaleTimeString(), options);
@@ -69,8 +70,11 @@ module.exports = function retryAsPromised(callback, options) {
 
         // Should not retry if max has been reached
         var shouldRetry = options.$current < options.max;
+        if (!shouldRetry) return reject(err);
 
-        if (shouldRetry && options.match.length && err) {
+        if (typeof options.match === 'function') {
+          shouldRetry = !!options.match(err, options);
+        } else if (options.match.length) {
           // If match is defined we should fail if it is not met
           shouldRetry = options.match.reduce(function(shouldRetry, match) {
             if (shouldRetry) return shouldRetry;
@@ -87,7 +91,6 @@ module.exports = function retryAsPromised(callback, options) {
             return shouldRetry;
           }, false);
         }
-
         if (!shouldRetry) return reject(err);
 
         var retryDelay = Math.pow(

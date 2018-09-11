@@ -276,7 +276,26 @@ describe(PROMISE_TYPE, function() {
           expect(callback.callCount).to.equal(5);
         });
     });
-  });
+
+    it('should continue retry while error is matched by function', function() {
+      var callback = sinon.stub();
+
+      callback.rejects(this.soRejected);
+      callback.onCall(4).resolves(this.soResolved);
+
+      return expect(
+        retry(callback, {
+          max: 15,
+          backoffBase: 0,
+          match: (err) => err instanceof Error
+        })
+      )
+        .to.eventually.equal(this.soResolved)
+        .then(function() {
+          expect(callback.callCount).to.equal(5);
+        });
+    });
+});
 
   describe('options.backoff', function() {
     it('should resolve after 5 retries and an eventual delay over 1800ms using default backoff', function() {
