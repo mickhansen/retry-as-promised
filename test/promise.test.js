@@ -1,13 +1,12 @@
 var chai = require('chai'),
   expect = chai.expect,
   moment = require('moment'),
-  sinon = require('sinon'),
-  sinonChai = require('sinon-chai');
+  sinon = require('sinon');
 
 var delay = ms => new Promise(_ => setTimeout(_, ms));
 
 chai.use(require('chai-as-promised'));
-require('sinon-as-promised')(Promise);
+sinon.usingPromise(Promise);
 
 var PROMISE_TYPE = process.env.PROMISE_TYPE;
 
@@ -18,8 +17,8 @@ describe(PROMISE_TYPE, function() {
 
   beforeEach(function() {
     this.count = 0;
-    this.soRejected = Math.random().toString();
-    this.soResolved = Math.random().toString();
+    this.soRejected = new Error(Math.random().toString());
+    this.soResolved = new Error(Math.random().toString());
   });
 
   it('should reject immediately if max is 1 (using options)', function() {
@@ -143,7 +142,7 @@ describe(PROMISE_TYPE, function() {
         retry(callback, {
           max: 15,
           backoffBase: 0,
-          match: 'Error: ' + this.soRejected
+          match: 'Error: ' + this.soRejected.message
         })
       )
         .to.eventually.equal(this.soResolved)
@@ -208,8 +207,8 @@ describe(PROMISE_TYPE, function() {
           max: 15,
           backoffBase: 0,
           match: [
-            'Error: ' + (this.soRejected + 1),
-            'Error: ' + this.soRejected
+            'Error: ' + (this.soRejected.message + 1),
+            'Error: ' + this.soRejected.message
           ]
         })
       )
