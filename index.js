@@ -4,14 +4,30 @@ var Promise = require('any-promise');
 var util = require('util');
 var format = util.format;
 
-function TimeoutError(message) {
+function TimeoutError(message, err) {
   Error.call(this);
   Error.captureStackTrace(this, TimeoutError);
   this.name = 'TimeoutError';
   this.message = message;
+  this.original = err;
 }
 
 util.inherits(TimeoutError, Error);
+
+function matches(match, err) {
+  if (match === true) return true;
+  if (typeof match === 'function') {
+    try {
+      if (err instanceof match) return true;
+    } catch (_) {
+      return !!match(err);
+    }
+  }
+  if (match === err.toString()) return true;
+  if (match === err.message) return true;
+  return match instanceof RegExp
+    && (match.test(err.message) || match.test(err.toString()));
+}
 
 module.exports = function retryAsPromised(callback, options) {
   if (!callback || !options) {
@@ -38,14 +54,12 @@ module.exports = function retryAsPromised(callback, options) {
     name: options.name || callback.name || 'unknown'
   };
 
-  if (typeof options.match !== 'function' && !Array.isArray(options.match)) {
-    options.match = [options.match];
+  if (!Array.isArray(options.match)) options.match = [options.match];
+  if (options.report) {
+    options.report('Trying ' + options.name + ' #' + options.$current + ' at ' + new Date().toLocaleTimeString(), options);
   }
 
-  var report = options.report;
-  if (report) {
-    report(format('Trying %s #%s at %s ', options.name, options.current, new Date().toLocaleTimeString()), options);
-  }
+  var lastError;
 
   return new Promise(function(resolve, reject) {
     var timeout, backoffTimeout;
@@ -53,7 +67,7 @@ module.exports = function retryAsPromised(callback, options) {
     if (options.timeout) {
       timeout = setTimeout(function() {
         if (backoffTimeout) clearTimeout(backoffTimeout);
-        reject(new TimeoutError(options.name + ' timed out'));
+        reject(new TimeoutError(options.name + ' timed out', lastError));
       }, options.timeout);
     }
 
@@ -67,33 +81,15 @@ module.exports = function retryAsPromised(callback, options) {
         if (timeout) clearTimeout(timeout);
         if (backoffTimeout) clearTimeout(backoffTimeout);
 
-        if (report) {
-            report((err && err.toString()) || err, options);
-        }
+        lastError = error;
+        error((err && err.toString()) || err);
 
         // Should not retry if max has been reached
         var shouldRetry = options.$current < options.max;
         if (!shouldRetry) return reject(err);
-
-        if (typeof options.match === 'function') {
-          shouldRetry = !!options.match(err, options);
-        } else if (options.match.length) {
-          // If match is defined we should fail if it is not met
-          shouldRetry = options.match.reduce(function(shouldRetry, match) {
-            if (shouldRetry) return shouldRetry;
-
-            if (
-              match === err.toString() ||
-              match === err.message ||
-              (typeof match === 'function' && err instanceof match) ||
-              (match instanceof RegExp &&
-                (match.test(err.message) || match.test(err.toString())))
-            ) {
-              shouldRetry = true;
-            }
-            return shouldRetry;
-          }, false);
-        }
+        shouldRetry = options.match.length === 0 || options.match.some(function (match) {
+          return matches(match, err)
+        });
         if (!shouldRetry) return reject(err);
 
         var retryDelay = Math.pow(
