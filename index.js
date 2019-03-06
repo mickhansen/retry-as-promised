@@ -9,7 +9,7 @@ function TimeoutError(message, err) {
   Error.captureStackTrace(this, TimeoutError);
   this.name = 'TimeoutError';
   this.message = message;
-  this.original = err;
+  this.previous = err;
 }
 
 util.inherits(TimeoutError, Error);
