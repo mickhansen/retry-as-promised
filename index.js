@@ -4,14 +4,30 @@ var Promise = require('any-promise');
 var util = require('util');
 var format = util.format;
 
-function TimeoutError(message) {
+function TimeoutError(message, err) {
   Error.call(this);
   Error.captureStackTrace(this, TimeoutError);
   this.name = 'TimeoutError';
   this.message = message;
+  this.previous = err;
 }
 
 util.inherits(TimeoutError, Error);
+
+function matches(match, err) {
+  if (match === true) return true;
+  if (typeof match === 'function') {
+    try {
+      if (err instanceof match) return true;
+    } catch (_) {
+      return !!match(err);
+    }
+  }
+  if (match === err.toString()) return true;
+  if (match === err.message) return true;
+  return match instanceof RegExp
+    && (match.test(err.message) || match.test(err.toString()));
+}
 
 module.exports = function retryAsPromised(callback, options) {
   if (!callback || !options) {
@@ -34,26 +50,20 @@ module.exports = function retryAsPromised(callback, options) {
     match: options.match || [],
     backoffBase: options.backoffBase === undefined ? 100 : options.backoffBase,
     backoffExponent: options.backoffExponent || 1.1,
-    report: options.report || null,
+    report: options.report || function () {},
     name: options.name || callback.name || 'unknown'
   };
 
-  var report = options.report;
-
-  // Massage match option into array so we can blindly treat it as such later
   if (!Array.isArray(options.match)) options.match = [options.match];
-
-  if (report) {
-    report(format('Trying %s #%s at %s ', options.name, options.current, new Date().toLocaleTimeString()), options);
-  }
+  options.report('Trying ' + options.name + ' #' + options.$current + ' at ' + new Date().toLocaleTimeString(), options);
 
   return new Promise(function(resolve, reject) {
-    var timeout, backoffTimeout;
+    var timeout, backoffTimeout, lastError;
 
     if (options.timeout) {
       timeout = setTimeout(function() {
         if (backoffTimeout) clearTimeout(backoffTimeout);
-        reject(new TimeoutError(options.name + ' timed out'));
+        reject(new TimeoutError(options.name + ' timed out', lastError));
       }, options.timeout);
     }
 
@@ -67,31 +77,15 @@ module.exports = function retryAsPromised(callback, options) {
         if (timeout) clearTimeout(timeout);
         if (backoffTimeout) clearTimeout(backoffTimeout);
 
-        if (report) {
-            report((err && err.toString()) || err, options);
-        }
+        lastError = err;
+        options.report((err && err.toString()) || err, options);
 
         // Should not retry if max has been reached
         var shouldRetry = options.$current < options.max;
-
-        if (shouldRetry && options.match.length && err) {
-          // If match is defined we should fail if it is not met
-          shouldRetry = options.match.reduce(function(shouldRetry, match) {
-            if (shouldRetry) return shouldRetry;
-
-            if (
-              match === err.toString() ||
-              match === err.message ||
-              (typeof match === 'function' && err instanceof match) ||
-              (match instanceof RegExp &&
-                (match.test(err.message) || match.test(err.toString())))
-            ) {
-              shouldRetry = true;
-            }
-            return shouldRetry;
-          }, false);
-        }
-
+        if (!shouldRetry) return reject(err);
+        shouldRetry = options.match.length === 0 || options.match.some(function (match) {
+          return matches(match, err)
+        });
         if (!shouldRetry) return reject(err);
 
         var retryDelay = Math.pow(
@@ -101,14 +95,11 @@ module.exports = function retryAsPromised(callback, options) {
 
         // Do some accounting
         options.$current++;
-        if (report) {
-          report(format('Retrying %s (%s)', options.name, options.$current), options);
-        }
+        options.report(format('Retrying %s (%s)', options.name, options.$current), options);
+
         if (retryDelay) {
           // Use backoff function to ease retry rate
-          if (report) {
-            report(format('Delaying retry of %s by %s', options.name, retryDelay), options);
-          }
+          options.report(format('Delaying retry of %s by %s', options.name, retryDelay), options);
           backoffTimeout = setTimeout(function() {
             retryAsPromised(callback, options)
               .then(resolve)
