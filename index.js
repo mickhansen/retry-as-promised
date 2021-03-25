@@ -88,9 +88,11 @@ module.exports = function retryAsPromised(callback, options) {
         });
         if (!shouldRetry) return reject(err);
 
-        var retryDelay = Math.pow(
-          options.backoffBase,
-          Math.pow(options.backoffExponent, options.$current - 1)
+        var retryDelay = Math.round(
+          Math.pow(
+              options.backoffBase,
+              Math.pow(options.backoffExponent, options.$current - 1)
+          )
         );
 
         // Do some accounting
