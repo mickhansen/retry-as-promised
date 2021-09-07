@@ -318,45 +318,42 @@ describe(PROMISE_TYPE, function() {
 });
 
   describe('options.backoff', function() {
-    it('should resolve after 5 retries and an eventual delay over 1800ms using default backoff', function() {
-      var startTime = moment();
+    it('should resolve after 5 retries and an eventual delay over 611ms using default backoff', async function() {
+      // Given
       var callback = sinon.stub();
-
       callback.rejects(this.soRejected);
       callback.onCall(5).resolves(this.soResolved);
 
-      return expect(retry(callback, { max: 15 }))
-        .to.eventually.equal(this.soResolved)
-        .then(function() {
-          expect(callback.callCount).to.equal(6);
-          expect(moment().diff(startTime)).to.be.above(1800);
-          expect(moment().diff(startTime)).to.be.below(3400);
-        });
+      // When
+      var startTime = moment();
+      const result = await retry(callback, { max: 15 });
+      var endTime = moment();
+
+      // Then
+      expect(result).to.equal(this.soResolved);
+      expect(callback.callCount).to.equal(6);
+      expect(endTime.diff(startTime)).to.be.within(600, 650);
     });
 
-    it('should resolve after 1 retry and initial delay equal to the backoffBase', function() {
+    it('should resolve after 1 retry and initial delay equal to the backoffBase', async function() {
       var initialDelay = 100;
       var callback = sinon.stub();
-      var startTime = moment();
-
+      
       callback.onCall(0).rejects(this.soRejected);
       callback.onCall(1).resolves(this.soResolved);
-
-      return expect(
-        retry(callback, {
+      
+      var startTime = moment();
+      const result = await retry(callback, {
           max: 2,
           backoffBase: initialDelay,
           backoffExponent: 3
-        })
-      )
-        .to.eventually.equal(this.soResolved)
-        .then(function() {
-          expect(callback.callCount).to.equal(2);
-          expect(moment().diff(startTime)).to.be.within(
-            initialDelay,
-            initialDelay + 50
-          ); // allow for some overhead
         });
+      var endTime = moment();
+        
+      expect(result).to.equal(this.soResolved);
+      expect(callback.callCount).to.equal(2);
+      // allow for some overhead
+      expect(endTime.diff(startTime)).to.be.within(initialDelay, initialDelay + 50);
     });
 
     it('should throw TimeoutError and cancel backoff delay if timeout is reached', function() {
