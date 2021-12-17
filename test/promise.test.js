@@ -8,9 +8,7 @@ var delay = ms => new Promise(_ => setTimeout(_, ms));
 chai.use(require('chai-as-promised'));
 sinon.usingPromise(Promise);
 
-var PROMISE_TYPE = process.env.PROMISE_TYPE;
-
-describe(PROMISE_TYPE, function() {
+describe('Global Promise', function() {
   var retry = require('../')
 
   beforeEach(function() {
