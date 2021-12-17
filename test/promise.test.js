@@ -8,11 +8,7 @@ var delay = ms => new Promise(_ => setTimeout(_, ms));
 chai.use(require('chai-as-promised'));
 sinon.usingPromise(Promise);
 
-var PROMISE_TYPE = process.env.PROMISE_TYPE;
-
-describe(PROMISE_TYPE, function() {
-  require('any-promise/register/' + PROMISE_TYPE);
-  var Promise = require('any-promise');
+describe('Global Promise', function() {
   var retry = require('../')
 
   beforeEach(function() {
@@ -338,10 +334,10 @@ describe(PROMISE_TYPE, function() {
     it('should resolve after 1 retry and initial delay equal to the backoffBase', async function() {
       var initialDelay = 100;
       var callback = sinon.stub();
-      
+
       callback.onCall(0).rejects(this.soRejected);
       callback.onCall(1).resolves(this.soResolved);
-      
+
       var startTime = moment();
       const result = await retry(callback, {
           max: 2,
@@ -349,7 +345,7 @@ describe(PROMISE_TYPE, function() {
           backoffExponent: 3
         });
       var endTime = moment();
-        
+
       expect(result).to.equal(this.soResolved);
       expect(callback.callCount).to.equal(2);
       // allow for some overhead
