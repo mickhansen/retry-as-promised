@@ -1,6 +1,5 @@
 'use strict';
 
-var Promise = require('any-promise');
 var util = require('util');
 var format = util.format;
 

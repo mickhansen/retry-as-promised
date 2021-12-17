@@ -23,7 +23,6 @@
   },
   "homepage": "https://github.com/mickhansen/retry-as-promised",
   "dependencies": {
-    "any-promise": "^1.3.0"
   },
   "files": [],
   "devDependencies": {
