@@ -1,17 +1,12 @@
 'use strict';
 
-var util = require('util');
-var format = util.format;
-
-function TimeoutError(message, err) {
-  Error.call(this);
-  Error.captureStackTrace(this, TimeoutError);
-  this.name = 'TimeoutError';
-  this.message = message;
-  this.previous = err;
+class TimeoutError extends Error {
+  constructor(message, err) {
+    super(message);
+    this.name = "TimeoutError";
+    this.previous = err;
+  }
 }
-
-util.inherits(TimeoutError, Error);
 
 function matches(match, err) {
   if (match === true) return true;
@@ -91,11 +86,11 @@ module.exports = function retryAsPromised(callback, options) {
 
         // Do some accounting
         options.$current++;
-        options.report(format('Retrying %s (%s)', options.name, options.$current), options);
+        options.report(`Retrying ${options.name} (${options.$current})`, options);
 
         if (retryDelay) {
           // Use backoff function to ease retry rate
-          options.report(format('Delaying retry of %s by %s', options.name, retryDelay), options);
+          options.report(`Delaying retry of ${options.name} by ${retryDelay}`, options);
           backoffTimeout = setTimeout(function() {
             retryAsPromised(callback, options)
               .then(resolve)
