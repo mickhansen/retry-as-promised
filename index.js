@@ -72,7 +72,7 @@ module.exports = function retryAsPromised(callback, options) {
         if (backoffTimeout) clearTimeout(backoffTimeout);
 
         lastError = err;
-        options.report((err && err.toString()) || err, options);
+        options.report((err && err.toString()) || err, options, err);
 
         // Should not retry if max has been reached
         var shouldRetry = options.$current < options.max;
