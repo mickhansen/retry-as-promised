@@ -366,4 +366,60 @@ describe('Global Promise', function() {
       ).to.eventually.be.rejectedWith(retry.TimeoutError);
     });
   });
+
+  describe('options.report', function() {
+    it('should receive the error that triggered a retry', function() {
+      var report = sinon.stub();
+      var callback = sinon.stub();
+
+      callback.rejects(this.soRejected);
+      callback.onCall(1).resolves(this.soResolved);
+
+      return expect(
+        retry(callback, {max: 3, report})
+      )
+        .to.eventually.equal(this.soResolved)
+        .then(function() {
+          expect(callback.callCount).to.equal(2);
+
+          // messages sent to report are:
+          // Trying functionStub #1 at <timestamp>
+          // Error: <random number>                 <--- This is the report call we want to test
+          // Retrying functionStub (2)
+          // Delaying retry of functionStub by 100
+          // Trying functionStub #2 at <timestamp>
+          expect(report.callCount).to.equal(5);
+          expect(report.getCall(1).args[2]).to.be.instanceOf(Error);
+        });
+    });
+
+    it('should receive the error that exceeded max', function() {
+      var report = sinon.stub();
+      var callback = sinon.stub();
+
+      callback.rejects(this.soRejected);
+
+      return expect(
+        retry(callback, {max: 3, report})
+      )
+        .to.eventually.be.rejectedWith(Error)
+        .then(function() {
+          expect(callback.callCount).to.equal(3);
+
+          // Trying functionStub #1 at <timestamp>
+          // Error: <random number>
+          // Retrying functionStub (2)
+          // Delaying retry of functionStub by 100
+          // Trying functionStub #2 at <timestamp>
+          // Error: <random number>
+          // Retrying functionStub (3)
+          // Delaying retry of functionStub by 110.00000000000001
+          // Trying functionStub #3 at <timestamp>
+          // Error: <random number>                 <--- This is the report call we want to test
+          expect(report.callCount).to.equal(10);
+          expect(report.lastCall.args[2]).to.be.instanceOf(Error);
+        });
+    });
+
+  });
 });
