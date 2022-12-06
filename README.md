@@ -1,6 +1,6 @@
 # retry-as-promised
 
-Retry promises when they fail, based upon [any-promise](https://github.com/kevinbeaty/any-promise).
+Retry promises when they fail
 
 ## Installation
 
