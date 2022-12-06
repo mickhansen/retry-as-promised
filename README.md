@@ -12,7 +12,7 @@ $ yarn add retry-as-promised
 ## Configuration
 
 ```js
-var retry = require('retry-as-promised');
+var retry = require('retry-as-promised').default;
 
 var warningFn = function(msg){ someLoggingFunction(msg, 'notice'); };
 

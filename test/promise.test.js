@@ -9,7 +9,7 @@ chai.use(require('chai-as-promised'));
 sinon.usingPromise(Promise);
 
 describe('Global Promise', function() {
-  var retry = require('../')
+  var retry = require('../').default;
 
   beforeEach(function() {
     this.count = 0;
