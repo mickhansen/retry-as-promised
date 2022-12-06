@@ -16,7 +16,7 @@ export type MatchOption =
   | Error
   | Function;
 
-interface Options {
+export interface Options {
   max: number;
   timeout?: number | undefined;
   match?: MatchOption[] | MatchOption | undefined;
