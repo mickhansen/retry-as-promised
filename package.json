@@ -23,7 +23,6 @@
     "url": "https://github.com/mickhansen/retry-as-promised/issues"
   },
   "homepage": "https://github.com/mickhansen/retry-as-promised",
-  "files": [],
   "devDependencies": {
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
