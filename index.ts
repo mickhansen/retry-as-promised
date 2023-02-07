@@ -22,7 +22,7 @@ export interface Options {
   match?: MatchOption[] | MatchOption | undefined;
   backoffBase?: number | undefined;
   backoffExponent?: number | undefined;
-  report?: ((message: string, obj: Options, err?: any) => void) | undefined;
+  report?: ((message: string, obj: CoercedOptions, err?: any) => void) | undefined;
   name?: string | undefined;
 }
 
@@ -33,7 +33,7 @@ type CoercedOptions = {
   match: MatchOption[];
   backoffBase: number;
   backoffExponent: number;
-  report?: ((message: string, obj: Options, err?: any) => void) | undefined;
+  report?: ((message: string, obj: CoercedOptions, err?: any) => void) | undefined;
   name?: string | undefined;
 }
 type MaybePromise<T> = PromiseLike<T> | T;
