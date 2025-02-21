@@ -22,6 +22,7 @@ export interface Options {
   match?: MatchOption[] | MatchOption | undefined;
   backoffBase?: number | undefined;
   backoffExponent?: number | undefined;
+  backoffJitter: number | undefind;
   report?: ((message: string, obj: CoercedOptions, err?: any) => void) | undefined;
   name?: string | undefined;
 }
@@ -33,6 +34,7 @@ type CoercedOptions = {
   match: MatchOption[];
   backoffBase: number;
   backoffExponent: number;
+  backoffJitter: number;
   report?: ((message: string, obj: CoercedOptions, err?: any) => void) | undefined;
   name?: string | undefined;
 }
@@ -69,6 +71,7 @@ export function retryAsPromised<T>(callback : RetryCallback<T>, optionsInput : O
     match: optionsInput.match ? Array.isArray(optionsInput.match) ? optionsInput.match : [optionsInput.match] : [],
     backoffBase: optionsInput.backoffBase === undefined ? 100 : optionsInput.backoffBase,
     backoffExponent: optionsInput.backoffExponent || 1.1,
+    backoffJitter: optionsInput.backoffJitter || 0.0,
     report: optionsInput.report,
     name: optionsInput.name || callback.name || 'unknown'
   };
@@ -110,6 +113,10 @@ export function retryAsPromised<T>(callback : RetryCallback<T>, optionsInput : O
         if (!shouldRetry) return reject(err);
 
         var retryDelay = options.backoffBase * Math.pow(options.backoffExponent, options.$current - 1);
+        if (options.backoffJitter) {
+          retryDelay = retryDelay + (Math.random() * options.backoffJitter * (Math.random() > 0.5 ? 1 : -1));
+          retryDelay = Math.max(0, retryDelay);
+        }
 
         // Do some accounting
         options.$current++;
