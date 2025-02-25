@@ -22,6 +22,7 @@ export interface Options {
   match?: MatchOption[] | MatchOption | undefined;
   backoffBase?: number | undefined;
   backoffExponent?: number | undefined;
+  backoffJitter: number | undefind;
   report?: ((message: string, obj: CoercedOptions, err?: any) => void) | undefined;
   name?: string | undefined;
 }
@@ -33,6 +34,7 @@ type CoercedOptions = {
   match: MatchOption[];
   backoffBase: number;
   backoffExponent: number;
+  backoffJitter: number;
   report?: ((message: string, obj: CoercedOptions, err?: any) => void) | undefined;
   name?: string | undefined;
 }
@@ -53,6 +55,11 @@ function matches(match : MatchOption, err: Error) {
     && (match.test(err.message) || match.test(err.toString()));
 }
 
+export function applyJitter(delayMs: number, maxJitterMs: number): number {
+  const newDelayMs = delayMs + (Math.random() * maxJitterMs * (Math.random() > 0.5 ? 1 : -1));
+  return Math.max(0, newDelayMs);
+}
+
 export function retryAsPromised<T>(callback : RetryCallback<T>, optionsInput : Options | number | CoercedOptions) : Promise<T> {
   if (!callback || !optionsInput) {
     throw new Error(
@@ -69,6 +76,7 @@ export function retryAsPromised<T>(callback : RetryCallback<T>, optionsInput : O
     match: optionsInput.match ? Array.isArray(optionsInput.match) ? optionsInput.match : [optionsInput.match] : [],
     backoffBase: optionsInput.backoffBase === undefined ? 100 : optionsInput.backoffBase,
     backoffExponent: optionsInput.backoffExponent || 1.1,
+    backoffJitter: optionsInput.backoffJitter || 0.0,
     report: optionsInput.report,
     name: optionsInput.name || callback.name || 'unknown'
   };
@@ -110,6 +118,9 @@ export function retryAsPromised<T>(callback : RetryCallback<T>, optionsInput : O
         if (!shouldRetry) return reject(err);
 
         var retryDelay = options.backoffBase * Math.pow(options.backoffExponent, options.$current - 1);
+        if (options.backoffJitter) {
+          retryDelay = applyJitter(retryDelay, options.backoffJitter);
+        }
 
         // Do some accounting
         options.$current++;

@@ -29,6 +29,7 @@ return retry(function (options) {
   ],
   backoffBase: 1000 // Initial backoff duration in ms. Default: 100,
   backoffExponent: 1.5 // Exponent to increase backoff each try. Default: 1.1
+  backoffJitter: 150 // Amount of randomized jitter in ms to add to retry interval to spread retries out over time. Default: 0.0.
   report: warningFn, // the function used for reporting; must have a (string, object) argument signature, where string is the message that will passed in by retry-as-promised, and the object will be this configuration object + the $current property
   name:  'SourceX' // if user supplies string, it will be used when composing error/reporting messages; else if retry gets a callback, uses callback name in erroring/reporting; else (default) uses literal string 'unknown'
 });
