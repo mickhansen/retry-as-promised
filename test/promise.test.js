@@ -422,4 +422,26 @@ describe('Global Promise', function() {
     });
 
   });
+
+  describe('options.backoffJitter', function() {
+    it('should resolve after 1 retries and an eventual delay in range of 80-120 ms', async function() {
+      var initialDelay = 100;
+      var delayJitter = 20;
+
+      // Given
+      var callback = sinon.stub();
+      callback.rejects(this.soRejected);
+      callback.onCall(1).resolves(this.soResolved);
+
+      // When
+      var startTime = moment();
+      const result = await retry(callback, { backoffBase: initialDelay, backoffJitter: delayJitter });
+      var endTime = moment();
+
+      // Then
+      expect(result).to.equal(this.soResolved);
+      expect(callback.callCount).to.equal(2);
+      expect(endTime.diff(startTime)).to.be.within(75, 125);
+    });
+  });
 });

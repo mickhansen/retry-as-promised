@@ -55,6 +55,11 @@ function matches(match : MatchOption, err: Error) {
     && (match.test(err.message) || match.test(err.toString()));
 }
 
+function applyJitter(delayMs: number, maxJitterMs: number): number {
+  const newDelayMs = delayMs + (Math.random() * maxJitterMs * (Math.random() > 0.5 ? 1 : -1));
+  return Math.max(0, newDelayMs);
+}
+
 export function retryAsPromised<T>(callback : RetryCallback<T>, optionsInput : Options | number | CoercedOptions) : Promise<T> {
   if (!callback || !optionsInput) {
     throw new Error(
@@ -114,8 +119,7 @@ export function retryAsPromised<T>(callback : RetryCallback<T>, optionsInput : O
 
         var retryDelay = options.backoffBase * Math.pow(options.backoffExponent, options.$current - 1);
         if (options.backoffJitter) {
-          retryDelay = retryDelay + (Math.random() * options.backoffJitter * (Math.random() > 0.5 ? 1 : -1));
-          retryDelay = Math.max(0, retryDelay);
+          retryDelay = applyJitter(retryDelay, options.backoffJitter);
         }
 
         // Do some accounting
