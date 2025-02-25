@@ -22,7 +22,7 @@ export interface Options {
   match?: MatchOption[] | MatchOption | undefined;
   backoffBase?: number | undefined;
   backoffExponent?: number | undefined;
-  backoffJitter: number | undefind;
+  backoffJitter: number | undefined;
   report?: ((message: string, obj: CoercedOptions, err?: any) => void) | undefined;
   name?: string | undefined;
 }

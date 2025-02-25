@@ -429,15 +429,15 @@ describe('Global Promise', function() {
 
     describe('fn:applyJitter', function() {
       it('applies randomized offsets to base delay', function() {
-        for (const i = 0; i < 10; i++) {
+        for (let i = 0; i < 10; i++) {
           const withJitter = applyJitter(1000, 100);
-          expect((withJitter >= 900 && withJitter <= 1100)).toBeTrue();
+          expect((withJitter >= 900 && withJitter <= 1100)).to.equal(true);
         }
       });
       
       it('never returns values less than zero', function() {
-        for (const i = 0; i < 10; i++) {
-          expect(applyJitter(10, 1000) >= 0).toBeTrue();
+        for (let i = 0; i < 10; i++) {
+          expect(applyJitter(10, 1000) >= 0).to.equal(true);
         }
       });
     });
@@ -453,7 +453,7 @@ describe('Global Promise', function() {
 
       // When
       var startTime = moment();
-      const result = await retry(callback, { backoffBase: initialDelay, backoffJitter: delayJitter });
+      const result = await retry(callback, { max: 5, backoffBase: initialDelay, backoffJitter: delayJitter });
       var endTime = moment();
 
       // Then
