@@ -55,7 +55,7 @@ function matches(match : MatchOption, err: Error) {
     && (match.test(err.message) || match.test(err.toString()));
 }
 
-function applyJitter(delayMs: number, maxJitterMs: number): number {
+export function applyJitter(delayMs: number, maxJitterMs: number): number {
   const newDelayMs = delayMs + (Math.random() * maxJitterMs * (Math.random() > 0.5 ? 1 : -1));
   return Math.max(0, newDelayMs);
 }
