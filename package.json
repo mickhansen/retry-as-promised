@@ -7,6 +7,7 @@
   "scripts": {
     "test": "cross-env DEBUG=retry-as-promised* ./node_modules/.bin/mocha --register ts-node/register --check-leaks --colors -t 10000 --reporter spec test/promise.test.js",
     "build": "tsc",
+    "check": "tsc --noEmit",
     "prepublishOnly": "npm run build"
   },
   "repository": {

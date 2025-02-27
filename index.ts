@@ -22,7 +22,7 @@ export interface Options {
   match?: MatchOption[] | MatchOption | undefined;
   backoffBase?: number | undefined;
   backoffExponent?: number | undefined;
-  backoffJitter: number | undefined;
+  backoffJitter?: number | undefined;
   report?: ((message: string, obj: CoercedOptions, err?: any) => void) | undefined;
   name?: string | undefined;
 }
@@ -34,7 +34,7 @@ type CoercedOptions = {
   match: MatchOption[];
   backoffBase: number;
   backoffExponent: number;
-  backoffJitter: number;
+  backoffJitter?: number;
   report?: ((message: string, obj: CoercedOptions, err?: any) => void) | undefined;
   name?: string | undefined;
 }
@@ -118,8 +118,9 @@ export function retryAsPromised<T>(callback : RetryCallback<T>, optionsInput : O
         if (!shouldRetry) return reject(err);
 
         var retryDelay = options.backoffBase * Math.pow(options.backoffExponent, options.$current - 1);
-        if (options.backoffJitter) {
-          retryDelay = applyJitter(retryDelay, options.backoffJitter);
+        const backoffJitter = options.backoffJitter;
+        if (backoffJitter !== undefined) {
+          retryDelay = applyJitter(retryDelay, backoffJitter);
         }
 
         // Do some accounting
